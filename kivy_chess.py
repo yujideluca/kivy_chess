@@ -66,6 +66,44 @@ class TopOfEverything(FloatLayout):
         pass
 
 
+class MyWidget(Widget):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+
+
+class ClickableImage(ButtonBehavior, Image):
+    selected = BooleanProperty(False)
+    highlight_rect = None
+
+    def highlight(self):
+        if self.selected:
+            self.canvas.remove(self.highlight_rect)
+            self.highlight_rect = None
+        else:
+            with self.canvas:
+                Color(.498, .149, 1, .3)
+                self.highlight_rect = Rectangle(pos=self.pos, size=self.size)
+        self.selected = not self.selected
+
+    def on_release(self):
+        super().on_release()
+        self.highlight()
+
+    pass
+
+
+class Tile(ClickableImage):
+    def __init__(self, tile_color, number, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.tile_color = tile_color
+        self.number = number
+
+    def highlight(self):
+        super().highlight()
+        print(self.number)
+    pass
+
+
 class GameBoard(Screen):
     tiles_source = [
         "C:\\Users\\Yu\\PycharmProjects\\untitled\\chess_images\\square gray light _png_shadow_128px.png",
@@ -164,45 +202,6 @@ class GameBoard(Screen):
         #         print()
 
 
-
-class MyWidget(Widget):
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-
-
-class ClickableImage(ButtonBehavior, Image):
-    selected = BooleanProperty(False)
-    highlight_rect = None
-
-    def highlight(self):
-        if self.selected:
-            self.canvas.remove(self.highlight_rect)
-            self.highlight_rect = None
-        else:
-            with self.canvas:
-                Color(.498, .149, 1, .3)
-                self.highlight_rect = Rectangle(pos=self.pos, size=self.size)
-        self.selected = not self.selected
-
-    def on_release(self):
-        super().on_release()
-        self.highlight()
-
-    pass
-
-
-class Tile(ClickableImage):
-    def __init__(self, tile_color, number, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        self.tile_color = tile_color
-        self.number = number
-
-    def highlight(self):
-        super().highlight()
-        print(self.number)
-    pass
-
-
 class Piece(ClickableImage):
     def __init__(self, piece_color, coordinate, piece_type, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -211,17 +210,11 @@ class Piece(ClickableImage):
         self.piece_type = piece_type
 
     def valid_tiles(self):
-        x_coord = self.coordinate[0]
         y_coord = self.coordinate[1]
-
-        if x_coord < y_coord:
-            range_mod = x_coord
-            range_mod_x = x_coord
-        else:
-            range_mod = y_coord
-
+        x_coord = self.coordinate[0]
+        board_list = [(x, y) for x in range(8) for y in range(8)]
         range_dict = {
-            "pawn": [(x_coord, y_coord - move) for move in range(1, 2) if y_coord+move < 8 and x_coord+move < 8],
+            "pawn": [(x_coord, y_coord - move) for move in range(1, 2)],
             "special_pawn": [(x_coord, y_coord - 1), (x_coord, y_coord - 2)],
             # if pawn in original coordinate append (x_coord, y_coord + 2)
             "rook": [(x_coord - move, y_coord) for move in range(1, x_coord+1)] +
@@ -230,10 +223,10 @@ class Piece(ClickableImage):
                     [(x_coord, y_coord + move) for move in range(1, 8-y_coord)],
             "knight": [(x_coord + move, y_coord + move/2) for move in range(-2, 2, 4)] +
                       [(x_coord + move/2, y_coord + move) for move in range(-2, 2, 4)],
-            "bishop": [(x_coord + move, y_coord + move) for move in range(1, 8 - range_mod)] +
-                      [(x_coord + move, y_coord - move) for move in range(1, range_mod)] +
-                      [(x_coord - move, y_coord + move) for move in range(1, range_mod) ] +
-                      [(x_coord - move, y_coord - move) for move in range(1, range_mod)],
+            "bishop": [(x_coord + move, y_coord + move) for move in range(1, 8)] +
+                      [(x_coord + move, y_coord - move) for move in range(1, 8)] +
+                      [(x_coord - move, y_coord + move) for move in range(1, 8)] +
+                      [(x_coord - move, y_coord - move) for move in range(1, 8)],
             "queen": [(x_coord - move, y_coord) for move in range(1, x_coord+1)] +
                      [(x_coord, y_coord - move) for move in range(1, y_coord+1)] +
                      [(x_coord + move, y_coord) for move in range(1, 8-x_coord)] +
@@ -247,6 +240,7 @@ class Piece(ClickableImage):
                     [(x_coord + move, y_coord) for move in range(-1, 2, 2)] +
                     [(x_coord, y_coord + move) for move in range(-1, 2, 2)]
         }
+        piece_list = [(x, y) for x, y in range_dict[self.piece_type] if (x, y) in board_list]
         if self.piece_type == "pawn":
             if self.coordinate in [[i, 6] for i in range(8)]:
                 print(range_dict["special_pawn"])
@@ -254,25 +248,19 @@ class Piece(ClickableImage):
             else:
                 print(range_dict["pawn"])
                 return range_dict["pawn"]
-        elif self.piece_type == "rook":
-            print(range_dict["rook"])
-            return range_dict["rook"]
-        elif self.piece_type == "knight":
-            print(range_dict["knight"])
-            return range_dict["knight"]
-        elif self.piece_type == "bishop":
-            print(range_dict["bishop"])
-            return range_dict["bishop"]
-        elif self.piece_type == "queen":
-            print(range_dict["queen"])
-            return range_dict["queen"]
-        elif self.piece_type == "king":
-            print(range_dict["king"])
-            return range_dict["king"]
+        else:
+            print(piece_list)
+            return piece_list
 
     def highlight(self):
         super().highlight()
         self.valid_tiles()
+
+
+class Game(GameBoard, Piece):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+
 
 ####################
 class MyKivyChess(App):
