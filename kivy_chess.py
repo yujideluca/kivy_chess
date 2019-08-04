@@ -109,6 +109,33 @@ class GameBoard(Screen):
         "C:\\Users\\Yu\\PycharmProjects\\untitled\\chess_images\\square gray light _png_shadow_128px.png",
         "C:\\Users\\Yu\\PycharmProjects\\untitled\\chess_images\\square gray dark _png_shadow_128px.png"
     ]
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        Clock.schedule_once(self.after_init)
+
+    def after_init(self, *args):
+        self.make_board()
+        self.place_chess()
+
+    def call_abs_coord(self, tile_x, tile_y):
+        abs_coord = tile_x + (tile_y * 8)
+        return abs_coord
+
+    def make_board(self):
+        board = self.ids.board
+        tile_mod = 0
+        for tile in range(64):
+            tile_image = Tile(source=self.tiles_source[(tile + tile_mod) % 2],
+                              allow_stretch=True,
+                              keep_ratio=False,
+                              number=tile,
+                              tile_color=["white", "black"][(tile + tile_mod) % 2])
+            tile_image.number = tile
+            board.add_widget(tile_image)
+            if tile % 8 == 7:
+                tile_mod += 1
+
     black_pieces = {
         "pawn": "C:\\Users\\Yu\\PycharmProjects\\untitled\\chess_images\\b_pawn_png_shadow_128px.png",
         "rook": "C:\\Users\\Yu\\PycharmProjects\\untitled\\chess_images\\b_rook_png_shadow_128px.png",
@@ -142,35 +169,10 @@ class GameBoard(Screen):
         "pawn": [(i, 6) for i in range(8)]
     }
 
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        Clock.schedule_once(self.after_init)
-
-    def after_init(self, *args):
-        self.make_board()
-        self.place_chess()
-
-    def call_abs_coord(self, tile_x, tile_y):
-        abs_coord = tile_x + (tile_y * 8)
-        return abs_coord
-
-    def make_board(self):
-        board = self.ids.board
-        tile_mod = 0
-        for tile in range(64):
-            tile_image = Tile(source=self.tiles_source[(tile + tile_mod) % 2],
-                              allow_stretch=True,
-                              keep_ratio=False,
-                              number=tile,
-                              tile_color=["white", "black"][(tile + tile_mod) % 2])
-            tile_image.number = tile
-            board.add_widget(tile_image)
-            if tile % 8 == 7:
-                tile_mod += 1
-
     def place_chess(self):
         for piece_name, coordinates in self.opponent_pieces_dict.items():
             for coordinate in coordinates:
+                # adds black pieces
                 black_piece = Piece(source=self.black_pieces[piece_name],
                                     allow_stretch=True,
                                     keep_ratio=False,
@@ -181,6 +183,7 @@ class GameBoard(Screen):
                 self.ids.board.children[63-tile_ind].ids.anchor.add_widget(black_piece)
         for piece_name, coordinates in self.player_pieces_dict.items():
             for coordinate in coordinates:
+                # adds white pieces
                 white_piece = Piece(source=self.white_pieces[piece_name],
                                     allow_stretch=True,
                                     keep_ratio=False,
@@ -193,13 +196,14 @@ class GameBoard(Screen):
                 #  last one in the GridLayout, while the matrix coordinates we use for organize the chessboard considers
                 # the first left superior tile as the (0, 0) coordinate,
                 # so: self.ids.board.children's index == 63 - tile_ind
-        # for ind, tile in enumerate(self.ids.board.children):
-        #     print(ind, tile.number, end=' ')
-        #     if len(tile.children[0].children) > 0:
-        #         piece = tile.children[0].children[0]
-        #         print(piece.piece_type, piece.piece_color, piece.coordinate)
-        #     else:
-        #         print()
+            # troubleshooting
+            # for ind, tile in enumerate(self.ids.board.children):
+            #     print(ind, tile.number, end=' ')
+            #     if len(tile.children[0].children) > 0:
+            #         piece = tile.children[0].children[0]
+            #         print(piece.piece_type, piece.piece_color, piece.coordinate)
+            #     else:
+            #         print()
 
 
 class Piece(ClickableImage):
@@ -212,7 +216,6 @@ class Piece(ClickableImage):
     def valid_tiles(self):
         y_coord = self.coordinate[1]
         x_coord = self.coordinate[0]
-        board_list = [(x, y) for x in range(8) for y in range(8)]
         range_dict = {
             "pawn": [(x_coord, y_coord - move) for move in range(1, 2)],
             "special_pawn": [(x_coord, y_coord - 1), (x_coord, y_coord - 2)],
@@ -221,8 +224,8 @@ class Piece(ClickableImage):
                     [(x_coord, y_coord - move) for move in range(1, y_coord+1)] +
                     [(x_coord + move, y_coord) for move in range(1, 8-x_coord)] +
                     [(x_coord, y_coord + move) for move in range(1, 8-y_coord)],
-            "knight": [(x_coord + move, y_coord + move/2) for move in range(-2, 2, 4)] +
-                      [(x_coord + move/2, y_coord + move) for move in range(-2, 2, 4)],
+            "knight": [(x_coord + 2*(-1)**ex, y_coord + (-1)**exp) for ex in range(2) for exp in range(2)] +
+                      [(x_coord + (-1)**ex, y_coord + 2*(-1)**exp) for ex in range(2) for exp in range(2)],
             "bishop": [(x_coord + move, y_coord + move) for move in range(1, 8)] +
                       [(x_coord + move, y_coord - move) for move in range(1, 8)] +
                       [(x_coord - move, y_coord + move) for move in range(1, 8)] +
@@ -240,6 +243,7 @@ class Piece(ClickableImage):
                     [(x_coord + move, y_coord) for move in range(-1, 2, 2)] +
                     [(x_coord, y_coord + move) for move in range(-1, 2, 2)]
         }
+        board_list = [(x, y) for x in range(8) for y in range(8)]
         piece_list = [(x, y) for x, y in range_dict[self.piece_type] if (x, y) in board_list]
         if self.piece_type == "pawn":
             if self.coordinate in [[i, 6] for i in range(8)]:
@@ -252,14 +256,28 @@ class Piece(ClickableImage):
             print(piece_list)
             return piece_list
 
-    def highlight(self):
-        super().highlight()
-        self.valid_tiles()
+    # def highlight(self):
+    #     super().highlight()
+    #     self.valid_tiles()
 
 
-class Game(GameBoard, Piece):
+class ChessGame(GameBoard, Piece):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
+
+    def move_options(self):
+        super().valid_tiles()
+        for coord in super(Piece).valid_tiles():
+            if coord in super(GameBoard).player_pieces_dict.values():
+                super(Piece).valid_tiles().pop((x, y))
+            else:
+                pass
+        print(super(Piece).valid_tiles())
+
+    def highlight(self):
+        super(ClickableImage).highlight()
+        super(Piece).valid_tiles()
+        self.move_options()
 
 
 ####################
