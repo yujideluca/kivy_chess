@@ -106,8 +106,8 @@ class Tile(ClickableImage):
 
 class GameBoard(Screen):
     tiles_source = [
-        "C:\\Users\\Yu\\PycharmProjects\\untitled\\chess_images\\square gray light _png_shadow_128px.png",
-        "C:\\Users\\Yu\\PycharmProjects\\untitled\\chess_images\\square gray dark _png_shadow_128px.png"
+        "chess_images/square gray light _png_shadow_128px.png",
+        "chess_images/square gray dark _png_shadow_128px.png"
     ]
 
     def __init__(self, *args, **kwargs):
@@ -137,20 +137,20 @@ class GameBoard(Screen):
                 tile_mod += 1
 
     black_pieces = {
-        "pawn": "C:\\Users\\Yu\\PycharmProjects\\untitled\\chess_images\\b_pawn_png_shadow_128px.png",
-        "rook": "C:\\Users\\Yu\\PycharmProjects\\untitled\\chess_images\\b_rook_png_shadow_128px.png",
-        "knight": "C:\\Users\\Yu\\PycharmProjects\\untitled\\chess_images\\b_knight_png_shadow_128px.png",
-        "bishop": "C:\\Users\\Yu\\PycharmProjects\\untitled\\chess_images\\b_bishop_png_shadow_128px.png",
-        "king": "C:\\Users\\Yu\\PycharmProjects\\untitled\\chess_images\\b_king_png_shadow_128px.png",
-        "queen": "C:\\Users\\Yu\\PycharmProjects\\untitled\\chess_images\\b_queen_png_shadow_128px.png"
+        "pawn": "chess_images/b_pawn_png_shadow_128px.png",
+        "rook": "chess_images/b_rook_png_shadow_128px.png",
+        "knight": "chess_images/b_knight_png_shadow_128px.png",
+        "bishop": "chess_images/b_bishop_png_shadow_128px.png",
+        "king": "chess_images/b_king_png_shadow_128px.png",
+        "queen": "chess_images/b_queen_png_shadow_128px.png"
     }
     white_pieces = {
-        "pawn": "C:\\Users\\Yu\\PycharmProjects\\untitled\\chess_images\\w_pawn_png_shadow_128px.png",
-        "rook": "C:\\Users\\Yu\\PycharmProjects\\untitled\\chess_images\\w_rook_png_shadow_128px.png",
-        "knight": "C:\\Users\\Yu\\PycharmProjects\\untitled\\chess_images\\w_knight_png_shadow_128px.png",
-        "bishop": "C:\\Users\\Yu\\PycharmProjects\\untitled\\chess_images\\w_bishop_png_shadow_128px.png",
-        "queen": "C:\\Users\\Yu\\PycharmProjects\\untitled\\chess_images\\w_queen_png_shadow_128px.png",
-        "king": "C:\\Users\\Yu\\PycharmProjects\\untitled\\chess_images\\w_king_png_shadow_128px.png"
+        "pawn": "chess_images/w_pawn_png_shadow_128px.png",
+        "rook": "chess_images/w_rook_png_shadow_128px.png",
+        "knight": "chess_images/w_knight_png_shadow_128px.png",
+        "bishop": "chess_images/w_bishop_png_shadow_128px.png",
+        "queen": "chess_images/w_queen_png_shadow_128px.png",
+        "king": "chess_images/w_king_png_shadow_128px.png"
     }
     opponent_pieces_dict = {
         "rook": [(0, 0), (7, 0)],
@@ -213,71 +213,123 @@ class Piece(ClickableImage):
         self.coordinate = coordinate
         self.piece_type = piece_type
 
-    def valid_tiles(self):
-        y_coord = self.coordinate[1]
-        x_coord = self.coordinate[0]
-        range_dict = {
-            "pawn": [(x_coord, y_coord - move) for move in range(1, 2)],
-            "special_pawn": [(x_coord, y_coord - 1), (x_coord, y_coord - 2)],
-            # if pawn in original coordinate append (x_coord, y_coord + 2)
-            "rook": [(x_coord - move, y_coord) for move in range(1, x_coord+1)] +
-                    [(x_coord, y_coord - move) for move in range(1, y_coord+1)] +
-                    [(x_coord + move, y_coord) for move in range(1, 8-x_coord)] +
-                    [(x_coord, y_coord + move) for move in range(1, 8-y_coord)],
-            "knight": [(x_coord + 2*(-1)**ex, y_coord + (-1)**exp) for ex in range(2) for exp in range(2)] +
-                      [(x_coord + (-1)**ex, y_coord + 2*(-1)**exp) for ex in range(2) for exp in range(2)],
-            "bishop": [(x_coord + move, y_coord + move) for move in range(1, 8)] +
-                      [(x_coord + move, y_coord - move) for move in range(1, 8)] +
-                      [(x_coord - move, y_coord + move) for move in range(1, 8)] +
-                      [(x_coord - move, y_coord - move) for move in range(1, 8)],
-            "queen": [(x_coord - move, y_coord) for move in range(1, x_coord+1)] +
-                     [(x_coord, y_coord - move) for move in range(1, y_coord+1)] +
-                     [(x_coord + move, y_coord) for move in range(1, 8-x_coord)] +
-                     [(x_coord, y_coord + move) for move in range(1, 8-y_coord)] +
-                     [(x_coord - move, y_coord) for move in range(1, 8)] +
-                     [(x_coord, y_coord - move) for move in range(1, 8)] +
-                     [(x_coord + move, y_coord) for move in range(1, 8)] +
-                     [(x_coord, y_coord + move) for move in range(1, 8)],
-            "king": [(x_coord + move, y_coord + move) for move in range(-1, 2, 2)] +
-                    [(x_coord + move, y_coord - move) for move in range(-1, 2, 2)] +
-                    [(x_coord + move, y_coord) for move in range(-1, 2, 2)] +
-                    [(x_coord, y_coord + move) for move in range(-1, 2, 2)]
-        }
-        board_list = [(x, y) for x in range(8) for y in range(8)]
-        piece_list = [(x, y) for x, y in range_dict[self.piece_type] if (x, y) in board_list]
-        if self.piece_type == "pawn":
-            if self.coordinate in [[i, 6] for i in range(8)]:
-                print(range_dict["special_pawn"])
-                return range_dict["special_pawn"]
-            else:
-                print(range_dict["pawn"])
-                return range_dict["pawn"]
+    def pawn(self):
+        y_pawn = self.coordinate[1]
+        x_pawn = self.coordinate[0]
+        if self.coordinate in [(x_pawn, 6)]:
+            return [(x_pawn, y_pawn+1), (x_pawn, y_pawn+2)]
         else:
-            print(piece_list)
-            return piece_list
+            return [(x_pawn, y_pawn + 1)]
+
+    def rook(self):
+        y_rook = self.coordinate[1]
+        x_rook = self.coordinate[0]
+        rook_list = []
+        for x_r_axis in range(8):
+            if x_r_axis == x_rook:
+                pass
+            else:
+                rook_list.append((x_r_axis, y_rook))
+        for y_r_axis in range(8):
+            if y_r_axis == y_rook:
+                pass
+            else:
+                rook_list.append((x_rook, y_r_axis))
+        return rook_list
+
+    def knight(self):
+        y_knight = self.coordinate[1]
+        x_knight = self.coordinate[0]
+        knight_list = []
+        for x_kn_axis in range(5):
+            x_mov = -2
+            y_mov = 1
+            if x_kn_axis == x_knight:
+                pass
+            else:
+                if x_kn_axis in range(2):
+                    knight_list.append((x_knight+x_mov, y_knight+y_mov), (x_knight+x_mov, y_knight-y_mov))
+                else:
+                    knight_list.append((x_knight-x_mov, y_knight+y_mov), (x_knight-x_mov, y_knight-y_mov))
+            x_mov += x_mov
+            y_mov += y_mov
+        return knight_list
+
+    # def bishop(self):
+    #     y_bishop = self.coordinate[1]
+    #     x_bishop = self.coordinate[0]
+    #     bishop_list = []
+    #     if y_bishop > x_bishop:
+    #         y_bishop = b_limit
+    #     else:
+    #         x_bishop = b_limit
+    #     for b_mov in range()
+
+    # def valid_tiles(self):
+    #     y_coord = self.coordinate[1]
+    #     x_coord = self.coordinate[0]
+    #     range_dict = {
+    #         "pawn": [(x_coord, y_coord - move) for move in range(1, 2)],
+    #         "special_pawn": [(x_coord, y_coord - 1), (x_coord, y_coord - 2)],
+    #         # if pawn in original coordinate append (x_coord, y_coord + 2)
+    #         "rook": [(x_coord - move, y_coord) for move in range(1, x_coord+1)] +
+    #                 [(x_coord, y_coord - move) for move in range(1, y_coord+1)] +
+    #                 [(x_coord + move, y_coord) for move in range(1, 8-x_coord)] +
+    #                 [(x_coord, y_coord + move) for move in range(1, 8-y_coord)],
+    #         "knight": [(x_coord + 2*(-1)**ex, y_coord + (-1)**exp) for ex in range(2) for exp in range(2)] +
+    #                   [(x_coord + (-1)**ex, y_coord + 2*(-1)**exp) for ex in range(2) for exp in range(2)],
+    #         "bishop": [(x_coord + move, y_coord + move) for move in range(1, 8)] +
+    #                   [(x_coord + move, y_coord - move) for move in range(1, 8)] +
+    #                   [(x_coord - move, y_coord + move) for move in range(1, 8)] +
+    #                   [(x_coord - move, y_coord - move) for move in range(1, 8)],
+    #         "queen": [(x_coord - move, y_coord) for move in range(1, x_coord+1)] +
+    #                  [(x_coord, y_coord - move) for move in range(1, y_coord+1)] +
+    #                  [(x_coord + move, y_coord) for move in range(1, 8-x_coord)] +
+    #                  [(x_coord, y_coord + move) for move in range(1, 8-y_coord)] +
+    #                  [(x_coord - move, y_coord) for move in range(1, 8)] +
+    #                  [(x_coord, y_coord - move) for move in range(1, 8)] +
+    #                  [(x_coord + move, y_coord) for move in range(1, 8)] +
+    #                  [(x_coord, y_coord + move) for move in range(1, 8)],
+    #         "king": [(x_coord + move, y_coord + move) for move in range(-1, 2, 2)] +
+    #                 [(x_coord + move, y_coord - move) for move in range(-1, 2, 2)] +
+    #                 [(x_coord + move, y_coord) for move in range(-1, 2, 2)] +
+    #                 [(x_coord, y_coord + move) for move in range(-1, 2, 2)]
+    #     }
+    #     board_list = [(x, y) for x in range(8) for y in range(8)]
+    #     piece_list = [(x, y) for x, y in range_dict[self.piece_type] if (x, y) in board_list]
+    #     if self.piece_type == "pawn":
+    #         if self.coordinate in [[i, 6] for i in range(8)]:
+    #             print(range_dict["special_pawn"])
+    #             return range_dict["special_pawn"]
+    #         else:
+    #             print(range_dict["pawn"])
+    #             return range_dict["pawn"]
+    #     else:
+    #         print(piece_list)
+    #         return piece_list
 
     # def highlight(self):
     #     super().highlight()
     #     self.valid_tiles()
 
 
-class ChessGame(GameBoard, Piece):
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-
-    def move_options(self):
-        super().valid_tiles()
-        for coord in super(Piece).valid_tiles():
-            if coord in super(GameBoard).player_pieces_dict.values():
-                super(Piece).valid_tiles().pop((x, y))
-            else:
-                pass
-        print(super(Piece).valid_tiles())
-
-    def highlight(self):
-        super(ClickableImage).highlight()
-        super(Piece).valid_tiles()
-        self.move_options()
+# class ChessGame(GameBoard, Piece):
+#     def __init__(self, *args, **kwargs):
+#         super().__init__(*args, **kwargs)
+#
+#     def move_options(self):
+#         super().valid_tiles()
+#         for coord in super(Piece).valid_tiles():
+#             if coord in super(GameBoard).player_pieces_dict.values():
+#                 super(Piece).valid_tiles().pop((x, y))
+#             else:
+#                 pass
+#         print(super(Piece).valid_tiles())
+#
+#     def highlight(self):
+#         super(ClickableImage).highlight()
+#         super(Piece).valid_tiles()
+#         self.move_options()
 
 
 ####################
