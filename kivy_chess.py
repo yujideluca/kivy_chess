@@ -1,6 +1,5 @@
 from kivy.config import Config
-import numpy as np
-import random
+import weakref
 
 Config.set("input", "mouse", "mouse,disable_multitouch")
 
@@ -196,14 +195,17 @@ class GameBoard(Screen):
 
 
 class Piece(ClickableImage):
+    piece_instances = []
+
     def __init__(self, piece_color, coordinate, piece_type, *args, **kwargs):
         super().__init__(*args, **kwargs)
+        self.__class__.piece_instances.append(weakref.proxy(self))
         self.piece_color = piece_color
         self.coordinate = coordinate
         self.piece_type = piece_type
 
     def move_list_gen(self):
-        # Generates a list of touples with the possible move coordinates (considers an empty board, the pieces which
+        # Generates a list of tuples with the possible move coordinates (considers an empty board, the pieces which
         # prevents the movement to be done will be considered after
         move_list = []
 
@@ -285,8 +287,19 @@ class Piece(ClickableImage):
                     move_list.append((x_ki, y_ki))
 
         print(move_list)
-        print("hello")
+        self.position_tracking()
         return move_list
+
+    def position_tracking(self):
+        black_pieces_pos = []
+        white_pieces_pos = []
+        for instance in self.piece_instances:
+            if instance.piece_color == "black":
+                black_pieces_pos.append((instance.coordinate[0], instance.coordinate[1]))
+            else:
+                white_pieces_pos.append((instance.coordinate[0], instance.coordinate[1]))
+        return black_pieces_pos and white_pieces_pos
+
 
     def highlight(self):
         super().highlight()
