@@ -1,5 +1,4 @@
 from kivy.config import Config
-import weakref
 import numpy as np
 
 Config.set("input", "mouse", "mouse,disable_multitouch")
@@ -274,7 +273,7 @@ class Piece(ClickableImage):
 
     def __init__(self, piece_color, coordinate, piece_type, moves, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.__class__.piece_instances.append(weakref.proxy(self))
+        self.piece_instances.append(self)
         self.piece_color = piece_color
         self.coordinate = coordinate
         self.piece_type = piece_type
