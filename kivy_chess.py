@@ -280,18 +280,13 @@ class Piece(ClickableImage):
         self.moves = moves
 
     def position_tracking(self):
-        w_pieces_pos = []
-        b_pieces_pos = []
+        # makes an array which represents the empty (value = 0)  or the full tiles (white = 1 black = 2)
+        pieces_pos = np.zeros((8, 8), dtype=int)
         for instance in self.piece_instances:
-            if self.piece_color == "white":
-                w_pieces_pos.append([instance.piece_color,
-                                     instance.piece_type,
-                                     (instance.coordinate[0], instance.coordinate[1])])
-            else:
-                b_pieces_pos.append([instance.piece_color,
-                                     instance.piece_type,
-                                     (instance.coordinate[0], instance.coordinate[1])])
-        pieces_pos = [w_pieces_pos, b_pieces_pos]
+            if instance.piece_color == "white":
+                pieces_pos[instance.coordinate[1]][instance.coordinate[0]] = 1
+            if instance.piece_color == "black":
+                pieces_pos[instance.coordinate[1]][instance.coordinate[0]] = 2
         print(pieces_pos)
 
     def possible_moves(self, pieces_positions):
@@ -314,6 +309,7 @@ class Piece(ClickableImage):
 
     def highlight(self):
         super().highlight()
+        self.position_tracking()
 
 
 ####################
