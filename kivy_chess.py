@@ -81,8 +81,11 @@ class ClickableImage(ButtonBehavior, Image):
 
 
 class Tile(ClickableImage):
+    tile_instances = []
+
     def __init__(self, tile_color, number, *args, **kwargs):
         super().__init__(*args, **kwargs)
+        self.tile_instances.append(self)
         self.tile_color = tile_color
         self.number = number
 
@@ -156,80 +159,6 @@ class GameBoard(Screen):
         "king": [(4, 7)],
         "pawn": [(i, 6) for i in range(8)]
     }
-
-    # def piece_mov(self, coord_list, p_type):
-    #     # Generates a list of tuples with the possible move coordinates (considers an empty board, the pieces which
-    #     # prevents the movement to be done will be considered after
-    #     move_list = []
-    #     board_checker = Piece.position_tracking()
-    #     piece_x = coord_list[0]
-    #     piece_y = coord_list[1]
-    #     if p_type == "pawn":
-    #         if piece_y == 6:
-    #             for p_mov in range(1, 3):
-    #                 if board_checker[piece_y+p_mov][piece_x] == 0 or board_checker[piece_y+p_mov][piece_x] == 2:
-    #                     move_list.append((piece_x, piece_y+p_mov))
-    #         else:
-    #             if board_checker[piece_y+1][piece_x] == 0 or board_checker[piece_y+1][piece_x] == 2:
-    #                 move_list.append((piece_x, piece_y + 1))
-    #
-    #     # elif p_type == "rook":
-    #     #     for x_r_axis in range(8):
-    #     #         if board_checker[piece_y][x_r_axis] == 1 or board_checker[piece_y][x_r_axis] == 2:
-    #     #             move_list.append((x_r_axis, piece_y))
-    #     #         elif board_checker[piece_y][x_r_axis] == 0:
-    #     #     for y_r_axis in range(8):
-    #     #         if y_r_axis != piece_y:
-    #     #             move_list.append((piece_x, y_r_axis))
-    #
-    #     elif p_type == "knight":
-    #         # the if statements with range(8) check if the coordinate will be inside the board
-    #         # the -2, 2 range refers to the x axis. When the knight moves +/-2 in X (if abs(x_kn) == 2:)
-    #         # it moves +/-1 in Y
-    #         # When it moves +/- 1 in X (elif abs(x_kn) == 1:)
-    #         # then it moves +/- 2 in Y
-    #         for x_kn in range(-2, 2):
-    #             if x_kn + piece_x in range(8):
-    #                 if abs(x_kn) == 2:
-    #                     if piece_y + 1 in range(8):
-    #                         move_list.append((piece_x+x_kn, piece_y+1))
-    #                     elif piece_y - 1 in range(8):
-    #                         move_list.append((piece_x+x_kn, piece_y-1))
-    #                 elif abs(x_kn) == 1:
-    #                     if piece_y + 2 in range(8):
-    #                         move_list.append((piece_x+x_kn, piece_y+2))
-    #                     elif piece_y - 2 in range(8):
-    #                         move_list.append((piece_x+x_kn, piece_y-2))
-    #
-    #     elif p_type == "bishop":
-    #         board_list = [(x, y) for x in range(8) for y in range(8)]
-    #         for (x_b, y_b) in board_list:
-    #             if abs(piece_x - abs(x_b)) == abs(piece_y - abs(y_b)) and (piece_x, piece_y) != (x_b, y_b):
-    #                 move_list.append((x_b, y_b))
-    #
-    #     elif p_type == "queen":
-    #         board_list = [(x, y) for x in range(8) for y in range(8)]
-    #         for x_q_axis in range(8):
-    #             if x_q_axis != piece_x:
-    #                 move_list.append((x_q_axis, piece_y))
-    #         for y_q_axis in range(8):
-    #             if y_q_axis != piece_y:
-    #                 move_list.append((piece_x, y_q_axis))
-    #         for (x_q, y_q) in board_list:
-    #             if piece_x - abs(x_q) == piece_y - abs(y_q) and (piece_x, piece_y) != (x_q, y_q):
-    #                 move_list.append((x_q, y_q))
-    #
-    #     # else is king
-    #     else:
-    #         king_pre_list = list([(piece_x + 1, piece_y + move) for move in range(-1, 1)] +
-    #                              [(piece_x - 1, piece_y + move) for move in range(-1, 1)] +
-    #                              [(piece_x, piece_y + 1), (piece_x, piece_y - 1)])
-    #         for (x_ki, y_ki) in king_pre_list:
-    #             if x_ki and y_ki in range(8):
-    #                 move_list.append((x_ki, y_ki))
-    #     print(p_type)
-    #     print(move_list)
-    #     return move_list
 
     def place_chess(self):
         for piece_name, coordinates in self.opponent_pieces_dict.items():
@@ -496,14 +425,24 @@ class Piece(ClickableImage):
                 if x_ki and y_ki in range(8):
                     if board_checker[y_ki][x_ki] != 1:
                         move_list.append((x_ki, y_ki))
-        print(self.piece_type)
         print(move_list)
         return move_list
 
     def highlight(self):
         super().highlight()
-        self.position_tracking()
-        self.piece_mov()
+        highlight_schedule = [(num[0] + (num[1] * 8)) for num in self.piece_mov()]
+        tile_coords = [Tile.tile_instances[n].number for n in range(64)]
+        for t_coord in tile_coords:
+            if t_coord in highlight_schedule:
+                Tile.tile_instances[t_coord].highlight()
+
+
+class Game(Piece, GameBoard):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+
+    def highlight(self):
+        super().highlight()
 
 
 ####################
