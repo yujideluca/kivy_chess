@@ -219,8 +219,7 @@ class Piece(ClickableImage):
         return pieces_pos
 
     def piece_mov(self):
-        # Generates a list of tuples with the possible move coordinates (considers an empty board, the pieces which
-        # prevents the movement to be done will be considered after
+        # Generates a list of tuples with the possible move coordinates
         move_list = []
         board_checker = self.position_tracking()
         piece_x = self.coordinate[0]
@@ -230,11 +229,11 @@ class Piece(ClickableImage):
                 for p_mov in range(1, 3):
                     if board_checker[piece_y - p_mov][piece_x] == 0:
                         move_list.append((piece_x, piece_y - p_mov))
-                    if board_checker[piece_y - p_mov][piece_x] == 2:
+                    elif board_checker[piece_y - p_mov][piece_x] == 2:
                         move_list.append((piece_x, piece_y - p_mov))
                         break
             else:
-                if board_checker[piece_y + 1][piece_x] == 0 or board_checker[piece_y + 1][piece_x] == 2:
+                if board_checker[piece_y - 1][piece_x] == 0 or board_checker[piece_y - 1][piece_x] == 2:
                     move_list.append((piece_x, piece_y + 1))
 
         elif self.piece_type == "rook":
@@ -418,8 +417,8 @@ class Piece(ClickableImage):
 
         # else is king
         else:
-            king_pre_list = list([(piece_x + 1, piece_y + move) for move in range(-1, 1)] +
-                                 [(piece_x - 1, piece_y + move) for move in range(-1, 1)] +
+            king_pre_list = list([(piece_x + 1, piece_y + move) for move in range(-1, 2)] +
+                                 [(piece_x - 1, piece_y + move) for move in range(-1, 2)] +
                                  [(piece_x, piece_y + 1), (piece_x, piece_y - 1)])
             for (x_ki, y_ki) in king_pre_list:
                 if x_ki and y_ki in range(8):
