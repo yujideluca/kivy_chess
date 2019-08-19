@@ -224,6 +224,7 @@ class Piece(ClickableImage):
         board_checker = self.position_tracking()
         piece_x = self.coordinate[0]
         piece_y = self.coordinate[1]
+
         if self.piece_type == "pawn":
             if piece_y == 6:
                 for p_mov in range(1, 3):
@@ -237,41 +238,55 @@ class Piece(ClickableImage):
                     move_list.append((piece_x, piece_y + 1))
 
         elif self.piece_type == "rook":
-            for r_up in range(piece_y):
-                if board_checker[piece_y - r_up][piece_x] == 0:
-                    move_list.append((piece_x, piece_y - r_up))
-                elif board_checker[piece_y - r_up][piece_x] == 2:
-                    move_list.append((piece_x, piece_y - r_up))
-                    break
-                else:
-                    break
+            rook_list = [[piece_y, -1, 0],
+                         [8 - piece_y, 1, 0],
+                         [piece_x, 0, -1],
+                         [8 - piece_x, 0, 1]]
 
-            for r_down in range(7 - piece_y):
-                if board_checker[piece_y + r_down][piece_x] == 0:
-                    move_list.append((piece_x, piece_y + r_down))
-                elif board_checker[piece_y + r_down][piece_x] == 2:
-                    move_list.append((piece_x, piece_y + r_down))
-                    break
-                else:
-                    break
-
-            for r_left in range(piece_x):
-                if board_checker[piece_y][piece_x - r_left] == 0:
-                    move_list.append((piece_x - r_left, piece_y))
-                elif board_checker[piece_y][piece_x - r_left] == 2:
-                    move_list.append((piece_x - r_left, piece_y))
-                    break
-                else:
-                    break
-
-            for r_right in range(7 - piece_x):
-                if board_checker[piece_y][piece_x + r_right] == 0:
-                    move_list.append((r_right, piece_x + piece_y))
-                elif board_checker[piece_y][piece_x + r_right] == 2:
-                    move_list.append((piece_x + r_right, piece_y))
-                    break
-                else:
-                    break
+            for r_list in rook_list:
+                for r_direction in range(r_list[0]):
+                    if board_checker[piece_y + (r_list[1] * r_direction)][piece_x + (r_list[2] * r_direction)] == 0:
+                        move_list.append((piece_x + (r_list[2] * r_direction), piece_y + (r_list[1] * r_direction)))
+                    elif board_checker[piece_y + (r_list[1] * r_direction)][piece_x + (r_list[2] * r_direction)] == 2:
+                        move_list.append((piece_x + (r_list[2] * r_direction), piece_y + (r_list[1] * r_direction)))
+                        break
+                    else:
+                        break
+            # for r_up in range(piece_y):
+            #     if board_checker[piece_y - r_up][piece_x] == 0:
+            #         move_list.append((piece_x, piece_y - r_up))
+            #     elif board_checker[piece_y - r_up][piece_x] == 2:
+            #         move_list.append((piece_x, piece_y - r_up))
+            #         break
+            #     else:
+            #         break
+            #
+            # for r_down in range(8 - piece_y):
+            #     if board_checker[piece_y + r_down][piece_x] == 0:
+            #         move_list.append((piece_x, piece_y + r_down))
+            #     elif board_checker[piece_y + r_down][piece_x] == 2:
+            #         move_list.append((piece_x, piece_y + r_down))
+            #         break
+            #     else:
+            #         break
+            #
+            # for r_left in range(piece_x):
+            #     if board_checker[piece_y][piece_x - r_left] == 0:
+            #         move_list.append((piece_x - r_left, piece_y))
+            #     elif board_checker[piece_y][piece_x - r_left] == 2:
+            #         move_list.append((piece_x - r_left, piece_y))
+            #         break
+            #     else:
+            #         break
+            #
+            # for r_right in range(8 - piece_x):
+            #     if board_checker[piece_y][piece_x + r_right] == 0:
+            #         move_list.append((r_right, piece_x + piece_y))
+            #     elif board_checker[piece_y][piece_x + r_right] == 2:
+            #         move_list.append((piece_x + r_right, piece_y))
+            #         break
+            #     else:
+            #         break
 
         elif self.piece_type == "knight":
             # the if statements with range(8) check if the coordinate will be inside the board
@@ -297,124 +312,93 @@ class Piece(ClickableImage):
             # for (x_b, y_b) in board_list:
             #     if abs(piece_x - abs(x_b)) == abs(piece_y - abs(y_b)) and board_checker[y_b][x_b] != 1:
             #         move_list.append((x_b, y_b))
-            for b_up_right in range(7 - piece_x):
-                if b_up_right in range(piece_y):
-                    if board_checker[piece_y - b_up_right][piece_x + b_up_right] == 0:
-                        move_list.append((piece_x + b_up_right, piece_y - b_up_right))
-                    if board_checker[piece_y - b_up_right][piece_x + b_up_right] == 2:
-                        move_list.append((piece_x + b_up_right, piece_y - b_up_right))
-                        break
-                    else:
-                        break
+            bishop_list = [[8 - piece_x, piece_y, -1, 1],
+                           [piece_x, piece_y, -1, -1],
+                           [8 - piece_x, 7 - piece_y, 1, 1],
+                           [piece_x, 7 - piece_y, 1, -1]]
 
-            for b_up_left in range(piece_x):
-                if b_up_left in range(piece_y):
-                    if board_checker[piece_y - b_up_left][piece_x - b_up_left] == 0:
-                        move_list.append((piece_x - b_up_left, piece_y - b_up_left))
-                    if board_checker[piece_y - b_up_left][piece_x + b_up_left] == 2:
-                        move_list.append((piece_x - b_up_left, piece_y - b_up_left))
-                        break
-                    else:
-                        break
+            for b_item in bishop_list:
+                for b_diag in range(b_item[0]):
+                    if b_diag in range(b_item[1]):
+                        if board_checker[piece_y + (b_item[2] * b_diag)][piece_x + (b_item[3] * b_diag)] == 0:
+                            move_list.append((piece_x + (b_item[3] * b_diag), piece_y + (b_item[2] * b_diag)))
+                        if board_checker[piece_y + (b_item[2] * b_diag)][piece_x + (b_item[3] * b_diag)] == 2:
+                            move_list.append((piece_x + (b_item[3] * b_diag), piece_y + (b_item[2] * b_diag)))
+                            break
+                        else:
+                            break
 
-            for b_down_right in range(7 - piece_x):
-                if b_down_right in range(7 - piece_y):
-                    if board_checker[piece_y + b_down_right][piece_x + b_down_right] == 0:
-                        move_list.append((piece_x + b_down_right, piece_y + b_down_right))
-                    if board_checker[piece_y + b_down_right][piece_x + b_down_right] == 2:
-                        move_list.append((piece_x + b_down_right, piece_y + b_down_right))
-                        break
-                    else:
-                        break
-
-            for b_down_left in range(piece_x):
-                if b_down_left in range(7 - piece_y):
-                    if board_checker[piece_y + b_down_left][piece_x - b_down_left] == 0:
-                        move_list.append((piece_x - b_down_left, piece_y + b_down_left))
-                    if board_checker[piece_y + b_down_left][piece_x - b_down_left] == 2:
-                        move_list.append((piece_x - b_down_left, piece_y + b_down_left))
-                        break
-                    else:
-                        break
+            # for b_up_right in range(8 - piece_x):
+            #     if b_up_right in range(piece_y):
+            #         if board_checker[piece_y - b_up_right][piece_x + b_up_right] == 0:
+            #             move_list.append((piece_x + b_up_right, piece_y - b_up_right))
+            #         if board_checker[piece_y - b_up_right][piece_x + b_up_right] == 2:
+            #             move_list.append((piece_x + b_up_right, piece_y - b_up_right))
+            #             break
+            #         else:
+            #             break
+            #
+            # for b_up_left in range(piece_x):
+            #     if b_up_left in range(piece_y):
+            #         if board_checker[piece_y - b_up_left][piece_x - b_up_left] == 0:
+            #             move_list.append((piece_x - b_up_left, piece_y - b_up_left))
+            #         if board_checker[piece_y - b_up_left][piece_x + b_up_left] == 2:
+            #             move_list.append((piece_x - b_up_left, piece_y - b_up_left))
+            #             break
+            #         else:
+            #             break
+            #
+            # for b_down_right in range(8 - piece_x):
+            #     if b_down_right in range(8 - piece_y):
+            #         if board_checker[piece_y + b_down_right][piece_x + b_down_right] == 0:
+            #             move_list.append((piece_x + b_down_right, piece_y + b_down_right))
+            #         if board_checker[piece_y + b_down_right][piece_x + b_down_right] == 2:
+            #             move_list.append((piece_x + b_down_right, piece_y + b_down_right))
+            #             break
+            #         else:
+            #             break
+            #
+            # for b_down_left in range(piece_x):
+            #     if b_down_left in range(8 - piece_y):
+            #         if board_checker[piece_y + b_down_left][piece_x - b_down_left] == 0:
+            #             move_list.append((piece_x - b_down_left, piece_y + b_down_left))
+            #         if board_checker[piece_y + b_down_left][piece_x - b_down_left] == 2:
+            #             move_list.append((piece_x - b_down_left, piece_y + b_down_left))
+            #             break
+            #         else:
+            #             break
 
         # queen is bishop + rook
         elif self.piece_type == "queen":
-            for q_up in range(piece_y):
-                if board_checker[piece_y - q_up][piece_x] == 0:
-                    move_list.append((piece_x, piece_y - q_up))
-                elif board_checker[piece_y - q_up][piece_x] == 2:
-                    move_list.append((piece_x, piece_y - q_up))
-                    break
-                else:
-                    break
-
-            for q_down in range(7 - piece_y):
-                if board_checker[piece_y + q_down][piece_x] == 0:
-                    move_list.append((piece_x, piece_y + q_down))
-                elif board_checker[piece_y + q_down][piece_x] == 2:
-                    move_list.append((piece_x, piece_y + q_down))
-                    break
-                else:
-                    break
-
-            for q_left in range(piece_x):
-                if board_checker[piece_y][piece_x - q_left] == 0:
-                    move_list.append((piece_x - q_left, piece_y))
-                elif board_checker[piece_y][piece_x - q_left] == 2:
-                    move_list.append((piece_x - q_left, piece_y))
-                    break
-                else:
-                    break
-
-            for q_right in range(7 - piece_x):
-                if board_checker[piece_y][piece_x + q_right] == 0:
-                    move_list.append((q_right, piece_x + piece_y))
-                elif board_checker[piece_y][piece_x + q_right] == 2:
-                    move_list.append((piece_x + q_right, piece_y))
-                    break
-                else:
-                    break
-
-            for q_up_right in range(7 - piece_x):
-                if q_up_right in range(piece_y):
-                    if board_checker[piece_y - q_up_right][piece_x + q_up_right] == 0:
-                        move_list.append((piece_x + q_up_right, piece_y - q_up_right))
-                    if board_checker[piece_y - q_up_right][piece_x + q_up_right] == 2:
-                        move_list.append((piece_x + q_up_right, piece_y - q_up_right))
+            queen_list = [[piece_y, -1, 0],
+                          [8 - piece_y, 1, 0],
+                          [piece_x, 0, -1],
+                          [8 - piece_x, 0, 1]]
+            # vertical and horizontal movements
+            for q_list in queen_list:
+                for q_vert_hor in range(q_list[0]):
+                    if board_checker[piece_y + (q_list[1] * q_vert_hor)][piece_x + (q_list[2] * q_vert_hor)] == 0:
+                        move_list.append((piece_x + (q_list[2] * q_vert_hor), piece_y + (q_list[1] * q_vert_hor)))
+                    elif board_checker[piece_y + (q_list[1] * q_vert_hor)][piece_x + (q_list[2] * q_vert_hor)] == 2:
+                        move_list.append((piece_x + (q_list[2] * q_vert_hor), piece_y + (q_list[1] * q_vert_hor)))
                         break
                     else:
                         break
+            queen_diag = [[8 - piece_x, piece_y, -1, 1],
+                          [piece_x, piece_y, -1, -1],
+                          [8 - piece_x, 7 - piece_y, 1, 1],
+                          [piece_x, 7 - piece_y, 1, -1]]
 
-            for q_up_left in range(piece_x):
-                if q_up_left in range(piece_y):
-                    if board_checker[piece_y - q_up_left][piece_x - q_up_left] == 0:
-                        move_list.append((piece_x - q_up_left, piece_y - q_up_left))
-                    if board_checker[piece_y - q_up_left][piece_x + q_up_left] == 2:
-                        move_list.append((piece_x - q_up_left, piece_y - q_up_left))
-                        break
-                    else:
-                        break
-
-            for q_down_right in range(7 - piece_x):
-                if q_down_right in range(7 - piece_y):
-                    if board_checker[piece_y + q_down_right][piece_x + q_down_right] == 0:
-                        move_list.append((piece_x + q_down_right, piece_y + q_down_right))
-                    if board_checker[piece_y + q_down_right][piece_x + q_down_right] == 2:
-                        move_list.append((piece_x + q_down_right, piece_y + q_down_right))
-                        break
-                    else:
-                        break
-
-            for q_down_left in range(piece_x):
-                if q_down_left in range(7 - piece_y):
-                    if board_checker[piece_y + q_down_left][piece_x - q_down_left] == 0:
-                        move_list.append((piece_x - q_down_left, piece_y + q_down_left))
-                    if board_checker[piece_y + q_down_left][piece_x - q_down_left] == 2:
-                        move_list.append((piece_x - q_down_left, piece_y + q_down_left))
-                        break
-                    else:
-                        break
-
+            for q_list2 in queen_diag:
+                for q_diag in range(q_list2[0]):
+                    if q_diag in range(q_list2[1]):
+                        if board_checker[piece_y + (q_list2[2] * q_diag)][piece_x + (q_list2[3] * q_diag)] == 0:
+                            move_list.append((piece_x + (q_list2[3] * q_diag), piece_y + (q_list2[2] * q_diag)))
+                        if board_checker[piece_y + (q_list2[2] * q_diag)][piece_x + (q_list2[3] * q_diag)] == 2:
+                            move_list.append((piece_x + (q_list2[3] * q_diag), piece_y + (q_list2[2] * q_diag)))
+                            break
+                        else:
+                            break
         # else is king
         else:
             king_pre_list = list([(piece_x + 1, piece_y + move) for move in range(-1, 2)] +
