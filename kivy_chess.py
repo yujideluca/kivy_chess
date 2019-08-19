@@ -413,6 +413,10 @@ class Piece(ClickableImage):
 
     def highlight(self):
         super().highlight()
+        for high_tile in Tile.tile_instances:
+            if high_tile.highlight_rect is not None:
+                high_tile.canvas.remove(high_tile.highlight_rect)
+                high_tile.highlight_rect = None
         highlight_schedule = [(num[0] + (num[1] * 8)) for num in self.piece_mov()]
         tile_coords = [Tile.tile_instances[n].number for n in range(64)]
         for t_coord in tile_coords:
