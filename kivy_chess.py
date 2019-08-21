@@ -207,16 +207,13 @@ class Piece(ClickableImage):
         self.coordinate = coordinate
         self.piece_type = piece_type
 
-    def position_tracking(self):
         # makes an array which represents the empty (value = 0)  or the full tiles (white = 1 black = 2)
         pieces_pos = np.zeros((8, 8), dtype=int)
-        for instance in Piece.piece_instances:
+        for instance in self.piece_instances:
             if instance.piece_color == "white":
                 pieces_pos[instance.coordinate[1]][instance.coordinate[0]] = 1
             if instance.piece_color == "black":
                 pieces_pos[instance.coordinate[1]][instance.coordinate[0]] = 2
-        print(pieces_pos)
-        return pieces_pos
 
     def piece_mov(self):
         # Generates a list of tuples with the possible move coordinates
@@ -295,7 +292,7 @@ class Piece(ClickableImage):
             # When it moves +/- 1 in X (elif abs(x_kn) == 1:)
             # then it moves +/- 2 in Y
             for x_kn in range(-2, 3):
-                if x_kn + piece_x in range(8):
+                if 0 < x_kn + piece_x < 8:
                     if abs(x_kn) == 2:
                         if piece_y + 1 in range(8) and board_checker[piece_y+1][piece_x+x_kn] != 1:
                             move_list.append((piece_x+x_kn, piece_y+1))
@@ -319,7 +316,7 @@ class Piece(ClickableImage):
 
             for b_item in bishop_list:
                 for b_diag in range(b_item[0]):
-                    if b_diag in range(b_item[1]):
+                    if 0 < b_diag < b_item[1]:
                         if board_checker[piece_y + (b_item[2] * b_diag)][piece_x + (b_item[3] * b_diag)] == 0:
                             move_list.append((piece_x + (b_item[3] * b_diag), piece_y + (b_item[2] * b_diag)))
                         if board_checker[piece_y + (b_item[2] * b_diag)][piece_x + (b_item[3] * b_diag)] == 2:
@@ -391,7 +388,7 @@ class Piece(ClickableImage):
 
             for q_list2 in queen_diag:
                 for q_diag in range(q_list2[0]):
-                    if q_diag in range(q_list2[1]):
+                    if 0 < q_diag < q_list2[1]:
                         if board_checker[piece_y + (q_list2[2] * q_diag)][piece_x + (q_list2[3] * q_diag)] == 0:
                             move_list.append((piece_x + (q_list2[3] * q_diag), piece_y + (q_list2[2] * q_diag)))
                         if board_checker[piece_y + (q_list2[2] * q_diag)][piece_x + (q_list2[3] * q_diag)] == 2:
@@ -405,7 +402,7 @@ class Piece(ClickableImage):
                                  [(piece_x - 1, piece_y + move) for move in range(-1, 2)] +
                                  [(piece_x, piece_y + 1), (piece_x, piece_y - 1)])
             for (x_ki, y_ki) in king_pre_list:
-                if x_ki and y_ki in range(8):
+                if 0 < x_ki and y_ki < 8:
                     if board_checker[y_ki][x_ki] != 1:
                         move_list.append((x_ki, y_ki))
         print(move_list)
@@ -422,14 +419,6 @@ class Piece(ClickableImage):
         for t_coord in tile_coords:
             if t_coord in highlight_schedule:
                 Tile.tile_instances[t_coord].highlight()
-
-
-class Game(Piece, GameBoard):
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-
-    def highlight(self):
-        super().highlight()
 
 
 ####################
