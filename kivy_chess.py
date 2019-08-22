@@ -19,6 +19,8 @@ from kivy.uix.button import Button
 from kivy.properties import BooleanProperty
 from kivy.graphics import *
 
+pieces_pos = np.zeros((8, 8), dtype=int)
+
 class MyScreenManager(ScreenManager):
     returned = False
 
@@ -172,6 +174,8 @@ class GameBoard(Screen):
                                     piece_type=piece_name)
                 tile_ind = self.call_abs_coord(list(coordinate)[0], list(coordinate)[1])
                 self.ids.board.children[63-tile_ind].ids.anchor.add_widget(black_piece)
+                pieces_pos[coordinate[1]][coordinate[0]] = 2
+
         for piece_name, coordinates in self.player_pieces_dict.items():
             for coordinate in coordinates:
                 # adds white pieces
@@ -183,6 +187,7 @@ class GameBoard(Screen):
                                     piece_type=piece_name)
                 tile_ind = self.call_abs_coord(list(coordinate)[0], list(coordinate)[1])
                 self.ids.board.children[63-tile_ind].ids.anchor.add_widget(white_piece)
+                pieces_pos[coordinate[1]][coordinate[0]] = 1
                 # self.ids.board.children's index is the reverse of tile_ind's, because the first tile generated is the
                 #  last one in the GridLayout, while the matrix coordinates we use for organize the chessboard considers
                 # the first left superior tile as the (0, 0) coordinate,
@@ -207,18 +212,19 @@ class Piece(ClickableImage):
         self.coordinate = coordinate
         self.piece_type = piece_type
 
-        # makes an array which represents the empty (value = 0)  or the full tiles (white = 1 black = 2)
-        pieces_pos = np.zeros((8, 8), dtype=int)
-        for instance in self.piece_instances:
-            if instance.piece_color == "white":
-                pieces_pos[instance.coordinate[1]][instance.coordinate[0]] = 1
-            if instance.piece_color == "black":
-                pieces_pos[instance.coordinate[1]][instance.coordinate[0]] = 2
+    # makes an array which represents the empty (value = 0)  or the full tiles (white = 1 black = 2)
+    # pieces_pos = np.zeros((8, 8), dtype=int)
+    # for instance in piece_instances:
+    #     if instance.piece_color == "white":
+    #         pieces_pos[instance.coordinate[1]][instance.coordinate[0]] = 1
+    #     if instance.piece_color == "black":
+    #         pieces_pos[instance.coordinate[1]][instance.coordinate[0]] = 2
 
     def piece_mov(self):
+
         # Generates a list of tuples with the possible move coordinates
         move_list = []
-        board_checker = self.position_tracking()
+        board_checker = pieces_pos
         piece_x = self.coordinate[0]
         piece_y = self.coordinate[1]
 
@@ -292,7 +298,7 @@ class Piece(ClickableImage):
             # When it moves +/- 1 in X (elif abs(x_kn) == 1:)
             # then it moves +/- 2 in Y
             for x_kn in range(-2, 3):
-                if 0 < x_kn + piece_x < 8:
+                if -1 < x_kn + piece_x < 8:
                     if abs(x_kn) == 2:
                         if piece_y + 1 in range(8) and board_checker[piece_y+1][piece_x+x_kn] != 1:
                             move_list.append((piece_x+x_kn, piece_y+1))
@@ -316,7 +322,7 @@ class Piece(ClickableImage):
 
             for b_item in bishop_list:
                 for b_diag in range(b_item[0]):
-                    if 0 < b_diag < b_item[1]:
+                    if -1 < b_diag < b_item[1]:
                         if board_checker[piece_y + (b_item[2] * b_diag)][piece_x + (b_item[3] * b_diag)] == 0:
                             move_list.append((piece_x + (b_item[3] * b_diag), piece_y + (b_item[2] * b_diag)))
                         if board_checker[piece_y + (b_item[2] * b_diag)][piece_x + (b_item[3] * b_diag)] == 2:
@@ -388,7 +394,7 @@ class Piece(ClickableImage):
 
             for q_list2 in queen_diag:
                 for q_diag in range(q_list2[0]):
-                    if 0 < q_diag < q_list2[1]:
+                    if -1 < q_diag < q_list2[1]:
                         if board_checker[piece_y + (q_list2[2] * q_diag)][piece_x + (q_list2[3] * q_diag)] == 0:
                             move_list.append((piece_x + (q_list2[3] * q_diag), piece_y + (q_list2[2] * q_diag)))
                         if board_checker[piece_y + (q_list2[2] * q_diag)][piece_x + (q_list2[3] * q_diag)] == 2:
@@ -402,23 +408,24 @@ class Piece(ClickableImage):
                                  [(piece_x - 1, piece_y + move) for move in range(-1, 2)] +
                                  [(piece_x, piece_y + 1), (piece_x, piece_y - 1)])
             for (x_ki, y_ki) in king_pre_list:
-                if 0 < x_ki and y_ki < 8:
+                if -1 < x_ki < 8 and -1 < y_ki < 8:
                     if board_checker[y_ki][x_ki] != 1:
                         move_list.append((x_ki, y_ki))
         print(move_list)
+        print(board_checker)
         return move_list
 
     def highlight(self):
-        super().highlight()
+        # super().highlight()
+
         for high_tile in Tile.tile_instances:
             if high_tile.highlight_rect is not None:
                 high_tile.canvas.remove(high_tile.highlight_rect)
                 high_tile.highlight_rect = None
-        highlight_schedule = [(num[0] + (num[1] * 8)) for num in self.piece_mov()]
-        tile_coords = [Tile.tile_instances[n].number for n in range(64)]
-        for t_coord in tile_coords:
-            if t_coord in highlight_schedule:
-                Tile.tile_instances[t_coord].highlight()
+
+        highlight_schedule = [(num[0] + (num[1] * 8)) for num in self.piece_mov()] + [(self.coordinate[0] + 8 * self.coordinate[1])]
+        for t_coord in highlight_schedule:
+            Tile.tile_instances[t_coord].highlight()
 
 
 ####################
