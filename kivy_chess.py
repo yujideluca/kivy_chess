@@ -20,10 +20,10 @@ from kivy.properties import BooleanProperty
 from kivy.graphics import *
 
 pieces_pos = np.zeros((8, 8), dtype=int)
+# this list is an piece index which is updated by the placement of the pieces and the movement of the pieces
 
 class MyScreenManager(ScreenManager):
     returned = False
-
 
 class TopOfEverything(FloatLayout):
     window_size = [800, 600]
@@ -39,6 +39,7 @@ class TopOfEverything(FloatLayout):
 
     def keyboard_setup(self, me=None, *args):
         # Keyboard for debug
+
         if me == None:
             me = self
         me._keyboard = Window.request_keyboard(me._keyboard_closed, me)
@@ -241,18 +242,23 @@ class Piece(ClickableImage):
                     move_list.append((piece_x, piece_y + 1))
 
         elif self.piece_type == "rook":
+            # EXPLANATION: it runs the four directions appending the possible coordinates (pretty much as the bishop)
+            # when it finds a piece, it ends the loop appending the piece coordinate if it is an anemy piece,
+            # else it just breaks
             rook_list = [[piece_y, -1, 0],
                          [8 - piece_y, 1, 0],
                          [piece_x, 0, -1],
                          [8 - piece_x, 0, 1]]
+            # ROOK_LIST EXPLANATION: this list is a list of schedules in order
+            # to the for loop work to the four directions of motion of the piece
 
             for r_list in rook_list:
                 for r_direction in range(r_list[0]):
-                    if board_checker[piece_y + (r_list[1] * r_direction)][piece_x + (r_list[2] * r_direction)] == 0:
+                    checker = board_checker[piece_y + (r_list[1] * r_direction)][piece_x + (r_list[2] * r_direction)]
+                    if checker in (0, 2):
                         move_list.append((piece_x + (r_list[2] * r_direction), piece_y + (r_list[1] * r_direction)))
-                    elif board_checker[piece_y + (r_list[1] * r_direction)][piece_x + (r_list[2] * r_direction)] == 2:
-                        move_list.append((piece_x + (r_list[2] * r_direction), piece_y + (r_list[1] * r_direction)))
-                        break
+                        if checker in 2:
+                            break
                     else:
                         break
             # for r_up in range(piece_y):
@@ -292,22 +298,25 @@ class Piece(ClickableImage):
             #         break
 
         elif self.piece_type == "knight":
-            # the if statements with range(8) check if the coordinate will be inside the board
+            # EXPLANATION: the if statements with range(8) check if the coordinate will be inside the board
             # the -2, 2 range refers to the x axis. When the knight moves +/-2 in X (if abs(x_kn) == 2:)
             # it moves +/-1 in Y
             # When it moves +/- 1 in X (elif abs(x_kn) == 1:)
             # then it moves +/- 2 in Y
+
             for x_kn in range(-2, 3):
                 if -1 < x_kn + piece_x < 8:
+
                     if abs(x_kn) == 2:
-                        if piece_y + 1 in range(8) and board_checker[piece_y+1][piece_x+x_kn] != 1:
+                        if -1 < piece_y + 1 < 8 and board_checker[piece_y+1][piece_x+x_kn] != 1:
                             move_list.append((piece_x+x_kn, piece_y+1))
-                        elif piece_y - 1 in range(8) and board_checker[piece_y-1][piece_x+x_kn] != 1:
+                        elif -1 < piece_y - 1 < 8 and board_checker[piece_y-1][piece_x+x_kn] != 1:
                             move_list.append((piece_x+x_kn, piece_y-1))
+
                     elif abs(x_kn) == 1:
-                        if piece_y + 2 in range(8) and board_checker[piece_y+2][piece_x+x_kn] != 1:
+                        if -1 < piece_y + 2 < 8 and board_checker[piece_y+2][piece_x+x_kn] != 1:
                             move_list.append((piece_x+x_kn, piece_y+2))
-                        elif piece_y - 2 in range(8) and board_checker[piece_y-2][piece_x+x_kn] != 1:
+                        elif -1 < piece_y - 2 < 8 and board_checker[piece_y-2][piece_x+x_kn] != 1:
                             move_list.append((piece_x+x_kn, piece_y-2))
 
         elif self.piece_type == "bishop":
@@ -315,10 +324,14 @@ class Piece(ClickableImage):
             # for (x_b, y_b) in board_list:
             #     if abs(piece_x - abs(x_b)) == abs(piece_y - abs(y_b)) and board_checker[y_b][x_b] != 1:
             #         move_list.append((x_b, y_b))
+            # EXPLANATION: bishop runs to the four diagonals  each one at a time,
+            # when it finds with another piece, it ends the direction reading (appends if opponent's piece, else break)
             bishop_list = [[8 - piece_x, piece_y, -1, 1],
                            [piece_x, piece_y, -1, -1],
                            [8 - piece_x, 7 - piece_y, 1, 1],
                            [piece_x, 7 - piece_y, 1, -1]]
+            # BISHOP_LIST EXPLANATION: this list is a list of schedules in order
+            # to the for loop work to the four directions of motion of the piece
 
             for b_item in bishop_list:
                 for b_diag in range(b_item[0]):
@@ -331,6 +344,7 @@ class Piece(ClickableImage):
                         else:
                             break
 
+            # THE FOLLOWING CODE DOES THE SAME AS THE ACTUAL BISHOP MOVE ALGORITHM *************************
             # for b_up_right in range(8 - piece_x):
             #     if b_up_right in range(piece_y):
             #         if board_checker[piece_y - b_up_right][piece_x + b_up_right] == 0:
@@ -370,6 +384,7 @@ class Piece(ClickableImage):
             #             break
             #         else:
             #             break
+            #***************************************************************************************************
 
         # queen is bishop + rook
         elif self.piece_type == "queen":
@@ -377,7 +392,8 @@ class Piece(ClickableImage):
                           [8 - piece_y, 1, 0],
                           [piece_x, 0, -1],
                           [8 - piece_x, 0, 1]]
-            # vertical and horizontal movements
+
+            # vertical and horizontal movements (see more in rook)
             for q_list in queen_list:
                 for q_vert_hor in range(q_list[0]):
                     if board_checker[piece_y + (q_list[1] * q_vert_hor)][piece_x + (q_list[2] * q_vert_hor)] == 0:
@@ -387,11 +403,13 @@ class Piece(ClickableImage):
                         break
                     else:
                         break
+
             queen_diag = [[8 - piece_x, piece_y, -1, 1],
                           [piece_x, piece_y, -1, -1],
                           [8 - piece_x, 7 - piece_y, 1, 1],
                           [piece_x, 7 - piece_y, 1, -1]]
 
+            # diagonal movements (see more in bishop)
             for q_list2 in queen_diag:
                 for q_diag in range(q_list2[0]):
                     if -1 < q_diag < q_list2[1]:
@@ -404,6 +422,9 @@ class Piece(ClickableImage):
                             break
         # else is king
         else:
+            # EXPLANATION: it checks the three vertical squares besides the king coordinate,
+            # then it checks the coordinate at front and back of the king.
+            # All those coordinates are checked: the ones inside the table and without a ally piece in it are appended
             king_pre_list = list([(piece_x + 1, piece_y + move) for move in range(-1, 2)] +
                                  [(piece_x - 1, piece_y + move) for move in range(-1, 2)] +
                                  [(piece_x, piece_y + 1), (piece_x, piece_y - 1)])
@@ -416,7 +437,6 @@ class Piece(ClickableImage):
         return move_list
 
     def highlight(self):
-        # super().highlight()
 
         for high_tile in Tile.tile_instances:
             if high_tile.highlight_rect is not None:
