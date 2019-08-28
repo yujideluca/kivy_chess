@@ -78,7 +78,6 @@ class ClickableImage(ButtonBehavior, Image):
 
     def on_release(self):
         super().on_release()
-        self.highlight()
 
     pass
 
@@ -92,10 +91,15 @@ class Tile(ClickableImage):
         self.tile_color = tile_color
         self.number = number
 
-    def highlight(self):
-        super().highlight()
-        print(self.number)
-    pass
+    # def highlight(self):
+    #     super().highlight()
+    #     # print(self.number)
+    # pass
+
+    def on_release(self):
+        if self in Piece.highlighted_tiles:
+            self.highlight()
+
 
 
 class GameBoard(Screen):
@@ -205,6 +209,7 @@ class GameBoard(Screen):
 
 class Piece(ClickableImage):
     piece_instances = []
+    highlighted_tiles = []
 
     def __init__(self, piece_color, coordinate, piece_type, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -384,7 +389,6 @@ class Piece(ClickableImage):
             #             break
             #         else:
             #             break
-            #***************************************************************************************************
 
         # queen is bishop + rook
         elif self.piece_type == "queen":
@@ -420,6 +424,7 @@ class Piece(ClickableImage):
                             break
                         else:
                             break
+
         # else is king
         else:
             # EXPLANATION: it checks the three vertical squares besides the king coordinate,
@@ -432,20 +437,30 @@ class Piece(ClickableImage):
                 if -1 < x_ki < 8 and -1 < y_ki < 8:
                     if board_checker[y_ki][x_ki] != 1:
                         move_list.append((x_ki, y_ki))
-        print(move_list)
-        print(board_checker)
+        # print(move_list)
+        # print(board_checker)
         return move_list
 
-    def highlight(self):
-
-        for high_tile in Tile.tile_instances:
-            if high_tile.highlight_rect is not None:
+    def p_highlight(self):
+        p_mov_list = self.piece_mov()
+        highlight = []
+        if len(highlight) != 0:
+            for high_tile in highlight:
                 high_tile.canvas.remove(high_tile.highlight_rect)
                 high_tile.highlight_rect = None
-
-        highlight_schedule = [(num[0] + (num[1] * 8)) for num in self.piece_mov()] + [(self.coordinate[0] + 8 * self.coordinate[1])]
+        highlight = []
+        print(p_mov_list)
+        highlight_schedule = [(num[0] + (num[1] * 8)) for num in p_mov_list]
+        highlight_schedule += [(self.coordinate[0] + 8 * self.coordinate[1])]
         for t_coord in highlight_schedule:
             Tile.tile_instances[t_coord].highlight()
+            highlight.append(Tile.tile_instances[t_coord])
+            print(t_coord)
+
+        return highlight
+
+    def on_release(self):
+        self.p_highlight()
 
 
 ####################
@@ -454,7 +469,7 @@ class MyKivyChess(App):
         return TopOfEverything()
 
 
-with open("C:\\Users\\Yu\\PycharmProjects\\untitled\\chess_layout.kv", "rb") as kvfile:
+with open("chess_layout.kv", "rb") as kvfile:
     kivystr = kvfile.read()
     Builder.load_string(kivystr.decode('cp1252'))
 
