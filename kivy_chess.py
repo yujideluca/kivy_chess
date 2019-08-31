@@ -91,10 +91,9 @@ class Tile(ClickableImage):
         self.tile_color = tile_color
         self.number = number
 
-    # def highlight(self):
-    #     super().highlight()
-    #     # print(self.number)
-    # pass
+    def highlight(self):
+        super().highlight()
+        pass
 
     def on_release(self):
         if self in Piece.highlighted_tiles:
@@ -443,21 +442,23 @@ class Piece(ClickableImage):
 
     def p_highlight(self):
         p_mov_list = self.piece_mov()
-        highlight = []
-        if len(highlight) != 0:
-            for high_tile in highlight:
+        highlight_var = self.highlighted_tiles
+        if len(highlight_var) != 0:
+            for high_tile in highlight_var:
                 high_tile.canvas.remove(high_tile.highlight_rect)
                 high_tile.highlight_rect = None
-        highlight = []
+        highlight_var = []
         print(p_mov_list)
         highlight_schedule = [(num[0] + (num[1] * 8)) for num in p_mov_list]
         highlight_schedule += [(self.coordinate[0] + 8 * self.coordinate[1])]
+        print(highlight_schedule)
         for t_coord in highlight_schedule:
             Tile.tile_instances[t_coord].highlight()
-            highlight.append(Tile.tile_instances[t_coord])
-            print(t_coord)
+            highlight_var.append(Tile.tile_instances[t_coord])
+            self.highlighted_tiles = highlight_var
+            print(self.highlighted_tiles)
 
-        return highlight
+        return highlight_var
 
     def on_release(self):
         self.p_highlight()
