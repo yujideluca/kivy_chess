@@ -25,6 +25,7 @@ pieces_pos = np.zeros((8, 8), dtype=int)
 class MyScreenManager(ScreenManager):
     returned = False
 
+
 class TopOfEverything(FloatLayout):
     window_size = [800, 600]
 
@@ -63,8 +64,19 @@ class MyWidget(Widget):
 
 
 class ClickableImage(ButtonBehavior, Image):
+    pass
+
+
+class Tile(ClickableImage):
+    tile_instances = []
     selected = BooleanProperty(False)
     highlight_rect = None
+
+    def __init__(self, tile_color, number, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.tile_instances.append(self)
+        self.tile_color = tile_color
+        self.number = number
 
     def highlight(self):
         if self.selected:
@@ -76,63 +88,12 @@ class ClickableImage(ButtonBehavior, Image):
                 self.highlight_rect = Rectangle(pos=self.pos, size=self.size)
         self.selected = not self.selected
 
-    def on_release(self):
-        super().on_release()
-
-    pass
-
-
-class Tile(ClickableImage):
-    tile_instances = []
-
-    def __init__(self, tile_color, number, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        self.tile_instances.append(self)
-        self.tile_color = tile_color
-        self.number = number
-
-    def highlight(self):
-        super().highlight()
-        pass
-
-    def on_release(self):
-        if self in Piece.highlighted_tiles:
-            self.highlight()
-
-
 
 class GameBoard(Screen):
     tiles_source = [
         "chess_images/square gray light _png_shadow_128px.png",
         "chess_images/square gray dark _png_shadow_128px.png"
     ]
-
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        Clock.schedule_once(self.after_init)
-
-    def after_init(self, *args):
-        self.make_board()
-        self.place_chess()
-
-    def call_abs_coord(self, tile_x, tile_y):
-        abs_coord = tile_x + (tile_y * 8)
-        return abs_coord
-
-    def make_board(self):
-        board = self.ids.board
-        tile_mod = 0
-        for tile in range(64):
-            tile_image = Tile(source=self.tiles_source[(tile + tile_mod) % 2],
-                              allow_stretch=True,
-                              keep_ratio=False,
-                              number=tile,
-                              tile_color=["white", "black"][(tile + tile_mod) % 2])
-            tile_image.number = tile
-            board.add_widget(tile_image)
-            if tile % 8 == 7:
-                tile_mod += 1
-
     black_pieces = {
         "pawn": "chess_images/b_pawn_png_shadow_128px.png",
         "rook": "chess_images/b_rook_png_shadow_128px.png",
@@ -165,6 +126,34 @@ class GameBoard(Screen):
         "king": [(4, 7)],
         "pawn": [(i, 6) for i in range(8)]
     }
+    highlighted_tiles = []
+    selected_piece = None
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        Clock.schedule_once(self.after_init)
+
+    def after_init(self, *args):
+        self.make_board()
+        self.place_chess()
+
+    def call_abs_coord(self, tile_x, tile_y):
+        abs_coord = tile_x + (tile_y * 8)
+        return abs_coord
+
+    def make_board(self):
+        board = self.ids.board
+        tile_mod = 0
+        for tile in range(64):
+            tile_image = Tile(source=self.tiles_source[(tile + tile_mod) % 2],
+                              allow_stretch=True,
+                              keep_ratio=False,
+                              number=tile,
+                              tile_color=["white", "black"][(tile + tile_mod) % 2])
+            tile_image.number = tile
+            board.add_widget(tile_image)
+            if tile % 8 == 7:
+                tile_mod += 1
 
     def place_chess(self):
         for piece_name, coordinates in self.opponent_pieces_dict.items():
@@ -179,6 +168,7 @@ class GameBoard(Screen):
                 tile_ind = self.call_abs_coord(list(coordinate)[0], list(coordinate)[1])
                 self.ids.board.children[63-tile_ind].ids.anchor.add_widget(black_piece)
                 pieces_pos[coordinate[1]][coordinate[0]] = 2
+                black_piece.game_board = self
 
         for piece_name, coordinates in self.player_pieces_dict.items():
             for coordinate in coordinates:
@@ -192,6 +182,7 @@ class GameBoard(Screen):
                 tile_ind = self.call_abs_coord(list(coordinate)[0], list(coordinate)[1])
                 self.ids.board.children[63-tile_ind].ids.anchor.add_widget(white_piece)
                 pieces_pos[coordinate[1]][coordinate[0]] = 1
+                white_piece.game_board = self
                 # self.ids.board.children's index is the reverse of tile_ind's, because the first tile generated is the
                 #  last one in the GridLayout, while the matrix coordinates we use for organize the chessboard considers
                 # the first left superior tile as the (0, 0) coordinate,
@@ -205,10 +196,14 @@ class GameBoard(Screen):
             #     else:
             #         print()
 
+    def clean_highlighted(self):
+        for tile in self.highlighted_tiles:
+            tile.highlight()
+        self.highlighted_tiles = []
+
 
 class Piece(ClickableImage):
     piece_instances = []
-    highlighted_tiles = []
 
     def __init__(self, piece_color, coordinate, piece_type, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -216,14 +211,6 @@ class Piece(ClickableImage):
         self.piece_color = piece_color
         self.coordinate = coordinate
         self.piece_type = piece_type
-
-    # makes an array which represents the empty (value = 0)  or the full tiles (white = 1 black = 2)
-    # pieces_pos = np.zeros((8, 8), dtype=int)
-    # for instance in piece_instances:
-    #     if instance.piece_color == "white":
-    #         pieces_pos[instance.coordinate[1]][instance.coordinate[0]] = 1
-    #     if instance.piece_color == "black":
-    #         pieces_pos[instance.coordinate[1]][instance.coordinate[0]] = 2
 
     def piece_mov(self):
 
@@ -265,41 +252,6 @@ class Piece(ClickableImage):
                             break
                     else:
                         break
-            # for r_up in range(piece_y):
-            #     if board_checker[piece_y - r_up][piece_x] == 0:
-            #         move_list.append((piece_x, piece_y - r_up))
-            #     elif board_checker[piece_y - r_up][piece_x] == 2:
-            #         move_list.append((piece_x, piece_y - r_up))
-            #         break
-            #     else:
-            #         break
-            #
-            # for r_down in range(8 - piece_y):
-            #     if board_checker[piece_y + r_down][piece_x] == 0:
-            #         move_list.append((piece_x, piece_y + r_down))
-            #     elif board_checker[piece_y + r_down][piece_x] == 2:
-            #         move_list.append((piece_x, piece_y + r_down))
-            #         break
-            #     else:
-            #         break
-            #
-            # for r_left in range(piece_x):
-            #     if board_checker[piece_y][piece_x - r_left] == 0:
-            #         move_list.append((piece_x - r_left, piece_y))
-            #     elif board_checker[piece_y][piece_x - r_left] == 2:
-            #         move_list.append((piece_x - r_left, piece_y))
-            #         break
-            #     else:
-            #         break
-            #
-            # for r_right in range(8 - piece_x):
-            #     if board_checker[piece_y][piece_x + r_right] == 0:
-            #         move_list.append((r_right, piece_x + piece_y))
-            #     elif board_checker[piece_y][piece_x + r_right] == 2:
-            #         move_list.append((piece_x + r_right, piece_y))
-            #         break
-            #     else:
-            #         break
 
         elif self.piece_type == "knight":
             # EXPLANATION: the if statements with range(8) check if the coordinate will be inside the board
@@ -348,47 +300,6 @@ class Piece(ClickableImage):
                         else:
                             break
 
-            # THE FOLLOWING CODE DOES THE SAME AS THE ACTUAL BISHOP MOVE ALGORITHM *************************
-            # for b_up_right in range(8 - piece_x):
-            #     if b_up_right in range(piece_y):
-            #         if board_checker[piece_y - b_up_right][piece_x + b_up_right] == 0:
-            #             move_list.append((piece_x + b_up_right, piece_y - b_up_right))
-            #         if board_checker[piece_y - b_up_right][piece_x + b_up_right] == 2:
-            #             move_list.append((piece_x + b_up_right, piece_y - b_up_right))
-            #             break
-            #         else:
-            #             break
-            #
-            # for b_up_left in range(piece_x):
-            #     if b_up_left in range(piece_y):
-            #         if board_checker[piece_y - b_up_left][piece_x - b_up_left] == 0:
-            #             move_list.append((piece_x - b_up_left, piece_y - b_up_left))
-            #         if board_checker[piece_y - b_up_left][piece_x + b_up_left] == 2:
-            #             move_list.append((piece_x - b_up_left, piece_y - b_up_left))
-            #             break
-            #         else:
-            #             break
-            #
-            # for b_down_right in range(8 - piece_x):
-            #     if b_down_right in range(8 - piece_y):
-            #         if board_checker[piece_y + b_down_right][piece_x + b_down_right] == 0:
-            #             move_list.append((piece_x + b_down_right, piece_y + b_down_right))
-            #         if board_checker[piece_y + b_down_right][piece_x + b_down_right] == 2:
-            #             move_list.append((piece_x + b_down_right, piece_y + b_down_right))
-            #             break
-            #         else:
-            #             break
-            #
-            # for b_down_left in range(piece_x):
-            #     if b_down_left in range(8 - piece_y):
-            #         if board_checker[piece_y + b_down_left][piece_x - b_down_left] == 0:
-            #             move_list.append((piece_x - b_down_left, piece_y + b_down_left))
-            #         if board_checker[piece_y + b_down_left][piece_x - b_down_left] == 2:
-            #             move_list.append((piece_x - b_down_left, piece_y + b_down_left))
-            #             break
-            #         else:
-            #             break
-
         # queen is bishop + rook
         elif self.piece_type == "queen":
             queen_list = [[piece_y, -1, 0],
@@ -436,31 +347,28 @@ class Piece(ClickableImage):
                 if -1 < x_ki < 8 and -1 < y_ki < 8:
                     if board_checker[y_ki][x_ki] != 1:
                         move_list.append((x_ki, y_ki))
-        # print(move_list)
-        # print(board_checker)
         return move_list
 
     def p_highlight(self):
-        p_mov_list = self.piece_mov()
-        highlight_var = self.highlighted_tiles
-        if len(highlight_var) != 0:
-            for high_tile in highlight_var:
-                high_tile.canvas.remove(high_tile.highlight_rect)
-                high_tile.highlight_rect = None
+        if self.game_board.selected_piece is self:
+            self.game_board.selected_piece = None
+            return
+
         highlight_var = []
-        print(p_mov_list)
-        highlight_schedule = [(num[0] + (num[1] * 8)) for num in p_mov_list]
-        highlight_schedule += [(self.coordinate[0] + 8 * self.coordinate[1])]
-        print(highlight_schedule)
+        highlight_schedule = []
+        for num in self.piece_mov():
+            highlight_schedule.append(self.game_board.call_abs_coord(*num))
+        highlight_schedule.append(self.game_board.call_abs_coord(*self.coordinate))
+
         for t_coord in highlight_schedule:
             Tile.tile_instances[t_coord].highlight()
             highlight_var.append(Tile.tile_instances[t_coord])
-            self.highlighted_tiles = highlight_var
-            print(self.highlighted_tiles)
 
-        return highlight_var
+        self.game_board.highlighted_tiles = highlight_var
+        self.game_board.selected_piece = self
 
     def on_release(self):
+        self.game_board.clean_highlighted()
         self.p_highlight()
 
 
