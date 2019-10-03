@@ -22,6 +22,7 @@ from kivy.graphics import *
 pieces_pos = np.zeros((8, 8), dtype=int)
 # this list is an piece index which is updated by the placement of the pieces and the movement of the pieces
 
+
 class MyScreenManager(ScreenManager):
     returned = False
 
@@ -58,11 +59,6 @@ class TopOfEverything(FloatLayout):
         pass
 
 
-class MyWidget(Widget):
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-
-
 class ClickableImage(ButtonBehavior, Image):
     pass
 
@@ -87,6 +83,16 @@ class Tile(ClickableImage):
                 Color(.498, .149, 1, .3)
                 self.highlight_rect = Rectangle(pos=self.pos, size=self.size)
         self.selected = not self.selected
+
+    def on_release(self):
+        if self.selected:
+            piece = self.game_board.selected_piece
+            pieces_pos[piece.coordinate[1], piece.coordinate[0]] = 0
+            old_tile = piece.parent
+            old_tile.remove_widget(piece)
+            self.ids.anchor.add_widget(piece)
+            piece.coordinate = (int(self.number % 8), int(self.number/8))
+            pieces_pos[piece.coordinate[1], piece.coordinate[0]] = 1
 
 
 class GameBoard(Screen):
@@ -151,6 +157,7 @@ class GameBoard(Screen):
                               number=tile,
                               tile_color=["white", "black"][(tile + tile_mod) % 2])
             tile_image.number = tile
+            tile_image.game_board = self
             board.add_widget(tile_image)
             if tile % 8 == 7:
                 tile_mod += 1
@@ -181,6 +188,8 @@ class GameBoard(Screen):
                                     piece_type=piece_name)
                 tile_ind = self.call_abs_coord(list(coordinate)[0], list(coordinate)[1])
                 self.ids.board.children[63-tile_ind].ids.anchor.add_widget(white_piece)
+                #     the command above places the piece in a specific tile:
+                #     (tile = self.ids.board.children[63-tile_ind])
                 pieces_pos[coordinate[1]][coordinate[0]] = 1
                 white_piece.game_board = self
                 # self.ids.board.children's index is the reverse of tile_ind's, because the first tile generated is the
@@ -213,7 +222,6 @@ class Piece(ClickableImage):
         self.piece_type = piece_type
 
     def piece_mov(self):
-
         # Generates a list of tuples with the possible move coordinates
         move_list = []
         board_checker = pieces_pos
@@ -284,22 +292,26 @@ class Piece(ClickableImage):
             # when it finds with another piece, it ends the direction reading (appends if opponent's piece, else break)
             bishop_list = [[8 - piece_x, piece_y, -1, 1],
                            [piece_x, piece_y, -1, -1],
-                           [8 - piece_x, 7 - piece_y, 1, 1],
-                           [piece_x, 7 - piece_y, 1, -1]]
+                           [8 - piece_x, 8 - piece_y, 1, 1],
+                           [piece_x, 8 - piece_y, 1, -1]]
             # BISHOP_LIST EXPLANATION: this list is a list of schedules in order
             # to the for loop work to the four directions of motion of the piece
-
-            for b_item in bishop_list:
-                for b_diag in range(b_item[0]):
-                    if -1 < b_diag < b_item[1]:
-                        if board_checker[piece_y + (b_item[2] * b_diag)][piece_x + (b_item[3] * b_diag)] == 0:
-                            move_list.append((piece_x + (b_item[3] * b_diag), piece_y + (b_item[2] * b_diag)))
-                        if board_checker[piece_y + (b_item[2] * b_diag)][piece_x + (b_item[3] * b_diag)] == 2:
-                            move_list.append((piece_x + (b_item[3] * b_diag), piece_y + (b_item[2] * b_diag)))
-                            break
-                        else:
-                            break
-
+            for b_vector in bishop_list:
+                con = 1
+                collide = False
+                while not collide:
+                    y_cond = piece_y + (b_vector[2] * con)
+                    x_cond = piece_x + (b_vector[3] * con)
+                    if -1 < y_cond < 8 and -1 < x_cond < 8:
+                        if board_checker[y_cond][x_cond] == 0:
+                            move_list.append((x_cond, y_cond))
+                        if board_checker[y_cond][x_cond] == 2:
+                            move_list.append((x_cond, y_cond))
+                            collide = True
+                    else:
+                        collide = True
+                    con = con + 1
+            print(move_list)
         # queen is bishop + rook
         elif self.piece_type == "queen":
             queen_list = [[piece_y, -1, 0],
@@ -347,6 +359,8 @@ class Piece(ClickableImage):
                 if -1 < x_ki < 8 and -1 < y_ki < 8:
                     if board_checker[y_ki][x_ki] != 1:
                         move_list.append((x_ki, y_ki))
+        print(pieces_pos)
+        print("")
         return move_list
 
     def p_highlight(self):
