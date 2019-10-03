@@ -229,6 +229,8 @@ class Piece(ClickableImage):
         piece_y = self.coordinate[1]
 
         if self.piece_type == "pawn":
+            # EXPLANATION: if the pawn is in the original coordinate (y axis in position 6)
+            # it may move to the first and second spaces, otherwise, it may only move to the first space
             if piece_y == 6:
                 for p_mov in range(1, 3):
                     if board_checker[piece_y - p_mov][piece_x] == 0:
@@ -236,30 +238,41 @@ class Piece(ClickableImage):
                     elif board_checker[piece_y - p_mov][piece_x] == 2:
                         move_list.append((piece_x, piece_y - p_mov))
                         break
+                    else:
+                        break
             else:
                 if board_checker[piece_y - 1][piece_x] == 0 or board_checker[piece_y - 1][piece_x] == 2:
-                    move_list.append((piece_x, piece_y + 1))
+                    move_list.append((piece_x, piece_y - 1))
 
         elif self.piece_type == "rook":
             # EXPLANATION: it runs the four directions appending the possible coordinates (pretty much as the bishop)
-            # when it finds a piece, it ends the loop appending the piece coordinate if it is an anemy piece,
+            # when it finds a piece, it ends the loop appending the piece coordinate if it is an enemy piece,
             # else it just breaks
-            rook_list = [[piece_y, -1, 0],
-                         [8 - piece_y, 1, 0],
-                         [piece_x, 0, -1],
-                         [8 - piece_x, 0, 1]]
+            rook_list = [[-1, 0],
+                         [1, 0],
+                         [0, -1],
+                         [0, 1]]
             # ROOK_LIST EXPLANATION: this list is a list of schedules in order
             # to the for loop work to the four directions of motion of the piece
 
-            for r_list in rook_list:
-                for r_direction in range(r_list[0]):
-                    checker = board_checker[piece_y + (r_list[1] * r_direction)][piece_x + (r_list[2] * r_direction)]
-                    if checker in (0, 2):
-                        move_list.append((piece_x + (r_list[2] * r_direction), piece_y + (r_list[1] * r_direction)))
-                        if checker in 2:
+            for r_vector in rook_list:
+                con = 1
+                collide = False
+                while not collide:
+                    y_cond = piece_y + (r_vector[0] * con)
+                    x_cond = piece_x + (r_vector[1] * con)
+                    if -1 < y_cond < 8 and -1 < x_cond < 8:
+                        if board_checker[y_cond][x_cond] == 0:
+                            move_list.append((x_cond, y_cond))
+                        if board_checker[y_cond][x_cond] == 2:
+                            move_list.append((x_cond, y_cond))
+                            collide = True
+                        if board_checker[y_cond][x_cond] == 1:
                             break
                     else:
-                        break
+                        collide = True
+                    con = con + 1
+            print(move_list)
 
         elif self.piece_type == "knight":
             # EXPLANATION: the if statements with range(8) check if the coordinate will be inside the board
@@ -290,62 +303,63 @@ class Piece(ClickableImage):
             #         move_list.append((x_b, y_b))
             # EXPLANATION: bishop runs to the four diagonals  each one at a time,
             # when it finds with another piece, it ends the direction reading (appends if opponent's piece, else break)
-            bishop_list = [[8 - piece_x, piece_y, -1, 1],
-                           [piece_x, piece_y, -1, -1],
-                           [8 - piece_x, 8 - piece_y, 1, 1],
-                           [piece_x, 8 - piece_y, 1, -1]]
+            bishop_list = [[-1, 1],
+                           [-1, -1],
+                           [1, 1],
+                           [1, -1]]
             # BISHOP_LIST EXPLANATION: this list is a list of schedules in order
             # to the for loop work to the four directions of motion of the piece
+            # the while loop keeps appending coordinates until a collision with
+            # another piece happen or the limit of the board be found
             for b_vector in bishop_list:
                 con = 1
                 collide = False
                 while not collide:
-                    y_cond = piece_y + (b_vector[2] * con)
-                    x_cond = piece_x + (b_vector[3] * con)
+                    y_cond = piece_y + (b_vector[0] * con)
+                    x_cond = piece_x + (b_vector[1] * con)
                     if -1 < y_cond < 8 and -1 < x_cond < 8:
                         if board_checker[y_cond][x_cond] == 0:
                             move_list.append((x_cond, y_cond))
                         if board_checker[y_cond][x_cond] == 2:
                             move_list.append((x_cond, y_cond))
                             collide = True
+                        if board_checker[y_cond][x_cond] == 1:
+                            break
                     else:
                         collide = True
                     con = con + 1
             print(move_list)
         # queen is bishop + rook
         elif self.piece_type == "queen":
-            queen_list = [[piece_y, -1, 0],
-                          [8 - piece_y, 1, 0],
-                          [piece_x, 0, -1],
-                          [8 - piece_x, 0, 1]]
+            # EXPLANATION: queen is the same algorithm of rook and bishop,
+            # but it has the schedule (list) of both moves (rook and bishop)
+            queen_list = [[-1, 0],
+                          [1, 0],
+                          [0, -1],
+                          [0, 1],
+                          [-1, 1],
+                          [-1, -1],
+                          [1, 1],
+                          [1, -1]]
 
-            # vertical and horizontal movements (see more in rook)
-            for q_list in queen_list:
-                for q_vert_hor in range(q_list[0]):
-                    if board_checker[piece_y + (q_list[1] * q_vert_hor)][piece_x + (q_list[2] * q_vert_hor)] == 0:
-                        move_list.append((piece_x + (q_list[2] * q_vert_hor), piece_y + (q_list[1] * q_vert_hor)))
-                    elif board_checker[piece_y + (q_list[1] * q_vert_hor)][piece_x + (q_list[2] * q_vert_hor)] == 2:
-                        move_list.append((piece_x + (q_list[2] * q_vert_hor), piece_y + (q_list[1] * q_vert_hor)))
-                        break
+            for q_vector in queen_list:
+                con = 1
+                collide = False
+                while not collide:
+                    y_cond = piece_y + (q_vector[0] * con)
+                    x_cond = piece_x + (q_vector[1] * con)
+                    if -1 < y_cond < 8 and -1 < x_cond < 8:
+                        if board_checker[y_cond][x_cond] == 0:
+                            move_list.append((x_cond, y_cond))
+                        if board_checker[y_cond][x_cond] == 2:
+                            move_list.append((x_cond, y_cond))
+                            collide = True
+                        if board_checker[y_cond][x_cond] == 1:
+                            break
                     else:
-                        break
-
-            queen_diag = [[8 - piece_x, piece_y, -1, 1],
-                          [piece_x, piece_y, -1, -1],
-                          [8 - piece_x, 7 - piece_y, 1, 1],
-                          [piece_x, 7 - piece_y, 1, -1]]
-
-            # diagonal movements (see more in bishop)
-            for q_list2 in queen_diag:
-                for q_diag in range(q_list2[0]):
-                    if -1 < q_diag < q_list2[1]:
-                        if board_checker[piece_y + (q_list2[2] * q_diag)][piece_x + (q_list2[3] * q_diag)] == 0:
-                            move_list.append((piece_x + (q_list2[3] * q_diag), piece_y + (q_list2[2] * q_diag)))
-                        if board_checker[piece_y + (q_list2[2] * q_diag)][piece_x + (q_list2[3] * q_diag)] == 2:
-                            move_list.append((piece_x + (q_list2[3] * q_diag), piece_y + (q_list2[2] * q_diag)))
-                            break
-                        else:
-                            break
+                        collide = True
+                    con = con + 1
+            print(move_list)
 
         # else is king
         else:
